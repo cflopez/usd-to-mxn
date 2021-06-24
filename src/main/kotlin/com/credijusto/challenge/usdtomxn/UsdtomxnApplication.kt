@@ -3,10 +3,9 @@ package com.credijusto.challenge.usdtomxn
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
-
 @SpringBootApplication
-class UsdToMxnCflopezApplication
+class UsdtomxnApplication
 
 fun main(args: Array<String>) {
-	runApplication<UsdToMxnCflopezApplication>(*args)
+	runApplication<UsdtomxnApplication>(*args)
 }
