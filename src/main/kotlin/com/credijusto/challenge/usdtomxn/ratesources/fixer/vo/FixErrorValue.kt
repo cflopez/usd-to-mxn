@@ -1,14 +1,13 @@
 package com.credijusto.challenge.usdtomxn.ratesources.fixer.vo
 
-class ErrorFixValue (code: Int, type: String)
-{
+import com.credijusto.challenge.usdtomxn.ratesources.fixer.vo.enum.StatusCode
+import com.credijusto.challenge.usdtomxn.serializers.StatusCodeAsIntSerializer
+import kotlinx.serialization.Serializable
 
-
-    {
-        "success":false,
-        "error":{
-        "code":105,
-        "type":"base_currency_access_restricted"
-    }
-    }
-}
+@Serializable
+class FixErrorValue (
+        @Serializable(with = StatusCodeAsIntSerializer::class)
+        val code: StatusCode,
+        val type: String,
+        val info: String
+    )

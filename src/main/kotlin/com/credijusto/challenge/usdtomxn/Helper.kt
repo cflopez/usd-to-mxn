@@ -15,15 +15,14 @@ class Helper {
             return -1.0 //This return is not reached, however we are converting Double? to Double above
         }
 
-        fun getProviderValueValidated(instant: Instant, value: String, source: String, decimals: Int): ProviderValue {
-            val d = value.toDoubleOrNull()
-            if (d != null) {
-                val rate = roundRateValue(d, decimals)
+        fun getProviderValueValidated(instant: Instant, value: Double?, source: String, decimals: Int): ProviderValue {
+            if (value != null) {
+                val rate = roundRateValue(value, decimals)
                 if (rate >= 0) {
-                    return ProviderValue(instant, rate.toString(), source,true)
+                    return ProviderValue(instant, rate, source,true)
                 }
             }
-            return ProviderValue(instant, value, source,false)
+            return ProviderValue(instant, -1.0, source,false)
         }
     }
 }

@@ -17,7 +17,7 @@ object InstantAsStringSerializer : KSerializer<Instant> {
         return Instant.ofEpochMilli(decoder.decodeString().toLong())
     }
     override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("Instant", PrimitiveKind.STRING)
+        PrimitiveSerialDescriptor("InstantString", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: Instant) {
         encoder.encodeString(

@@ -2,7 +2,7 @@ package com.credijusto.challenge.usdtomxn.ratesources.banxico
 
 import com.credijusto.challenge.usdtomxn.AppProperties
 import com.credijusto.challenge.usdtomxn.Helper.Companion.getProviderValueValidated
-import com.credijusto.challenge.usdtomxn.vo.BanxicoProcessValue
+import com.credijusto.challenge.usdtomxn.ratesources.banxico.vo.BanxicoProcessValue
 import com.credijusto.challenge.usdtomxn.vo.ProviderValue
 import com.credijusto.challenge.usdtomxn.vo.ResultValue
 
@@ -24,9 +24,6 @@ class BanxicoDomScraper {
 
         private val logger = LoggerFactory.getLogger(javaClass)
 
-        private const val errorPrefix = "Provider1: "
-
-        private const val unexpectedError = "Unexpected error when trying to scrape site."
 
         enum class indexNames {
             FECHA_NAME, FECHA_VALUE, FIX_NAME, FIX_VALUE, DOF_NAME, DOF_VALUE, PAGOS_NAME, PAGOS_VALUE
@@ -35,8 +32,8 @@ class BanxicoDomScraper {
         /**
          * To prefix every error we are going to show to the final user from this class
          */
-        private fun addError(errors: MutableList<String>, msg: String) {
-            errors.add(errorPrefix + msg)
+        private fun addError(errorPrefix:String, errors: MutableList<String>, msg: String) {
+            errors.add(errorPrefix + ": " + msg)
         }
 
         /**
@@ -82,7 +79,7 @@ class BanxicoDomScraper {
          * and get the results
          */
         @Throws(Exception::class)
-        fun getValuesFromTable(appProperties: AppProperties): ResultValue {
+        fun getRates(appProperties: AppProperties): ResultValue {
             val table = tableSelect(appProperties)
             if (table != null) {
 
@@ -91,14 +88,11 @@ class BanxicoDomScraper {
                 var errors = mutableListOf<String>()
 
                 var pv = validateAndScrape(table, appProperties, now, errors)
-                return buildResult(now, pv, errors)
 
-            }
-            else {
-                logger.error("Got null at tableSelect(appProperties)")
-                throw Exception(unexpectedError)
+                return buildResult(now, pv, errors, appProperties) ?: throw Exception()
             }
 
+            throw Exception()
         }
 
         /**
@@ -128,11 +122,13 @@ class BanxicoDomScraper {
                         return BanxicoProcessValue(elms, idxs, stringDateValue, keyVariants, decimals)
 
                     } else {
-                        addError(errors,"The date found on the HTML table at Banxico site does not match with current. Please try again.")
+                        addError(appProperties.provider1, errors,
+                            "The date found on the HTML table at Banxico site does not match with current. Please try again.")
                     }
 
                 } else {
-                    addError(errors,"No elements found at defined site, nothing to do.")
+                    addError(appProperties.provider1, errors,
+                        "No elements found at defined site, nothing to do.")
                 }
 
             } catch (ex: Exception) {
@@ -145,19 +141,24 @@ class BanxicoDomScraper {
 
                 when(ex) {
                     is IndexOutOfBoundsException, is ArrayStoreException -> {
-                        addError(errors,"Index Definitions incorrectly defined at application.properties for first site.")
+                        addError(appProperties.provider1, errors,
+                            "Index Definitions incorrectly defined at application.properties for first site.")
                     }
                     is NullPointerException -> {
-                        addError(errors,unexpectedError)
+                        addError(appProperties.provider1, errors,
+                            appProperties.unexpectedError)
                     }
                     is NumberFormatException -> {
-                        addError(errors,"roundDecimals incorrectly defined at application.properties.")
+                        addError(appProperties.provider1, errors,
+                            "roundDecimals incorrectly defined at application.properties.")
                     }
                     else -> throw ex
                 }
             }
 
-            addError(errors, unexpectedError)
+            addError(appProperties.provider1, errors,
+                appProperties.unexpectedError)
+
             return null
         }
 
@@ -166,30 +167,45 @@ class BanxicoDomScraper {
          */
         private fun buildResult(now: Instant,
                                 pv: BanxicoProcessValue?,
-                                errors: MutableList<String>
-        ): ResultValue {
+                                errors: MutableList<String>,
+                                appProperties: AppProperties
+        ): ResultValue? {
 
             var rates = mutableMapOf<String, ProviderValue>()
+            var warnings = mutableListOf<String>()
 
             if (pv != null) {
                 val fixSrc = pv.elms[ pv.idxs[indexNames.FIX_NAME]!! ].ownText()
                 val fixVal = pv.elms[ pv.idxs[indexNames.FIX_VALUE]!! ].ownText()
-                rates.put(pv.keyVariants[0], getProviderValueValidated(now, fixVal, fixSrc, pv.decimals))
+                val dfixVal = fixVal.toDoubleOrNull()
+                if (dfixVal == null) {
+                    addError(appProperties.provider1, warnings,
+                        "Value in response from this provider were not a valid number, found: " + fixVal)
+                }
+                rates.put(pv.keyVariants[0], getProviderValueValidated(now, dfixVal, fixSrc, pv.decimals))
 
                 val dofSrc = pv.elms[ pv.idxs[indexNames.DOF_NAME]!! ].ownText()
                 val dofVal = pv.elms[ pv.idxs[indexNames.DOF_VALUE]!! ].ownText()
-                rates.put(pv.keyVariants[1], getProviderValueValidated(now, dofVal, dofSrc, pv.decimals))
+                val ddofVal = dofVal.toDoubleOrNull()
+                if (ddofVal == null) {
+                    addError(appProperties.provider1, warnings,
+                        "Value in response from this provider were not a valid number, found: " + dofVal)
+                }
+                rates.put(pv.keyVariants[1], getProviderValueValidated(now, ddofVal, dofSrc, pv.decimals))
 
                 val pagosSrc = pv.elms[ pv.idxs[indexNames.PAGOS_NAME]!! ].ownText()
                 val pagosVal = pv.elms[ pv.idxs[indexNames.PAGOS_VALUE]!! ].ownText()
-                rates.put(pv.keyVariants[2], getProviderValueValidated(now, pagosVal, pagosSrc, pv.decimals))
+                val dpagosVal = pagosVal.toDoubleOrNull()
+                if (dpagosVal == null) {
+                    addError(appProperties.provider1, warnings,
+                        "Value in response from this provider were not a valid number, found: " + pagosVal)
+                }
+                rates.put(pv.keyVariants[2], getProviderValueValidated(now, dpagosVal, pagosSrc, pv.decimals))
 
-            } else {
-                addError(errors, unexpectedError)
+                return ResultValue(rates, errors, warnings)
             }
 
-            return ResultValue(rates, errors)
+            return null
         }
     }
-
 }

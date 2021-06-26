@@ -57,13 +57,17 @@ The next JSON structure format was used as the Result to complement the requirem
                 "valid": false
             }
         },
-        "errors":[]
+        "errors":[],
+        "warnings":[]
     }
 
 From the example above, the next things should be pointed:
 * "source" tell us the origin with a meaningful text even if we already have a key parent like "provider_1".
-* "value" it's a string, parsable to the expected number with 4 decimals if "valid" is true.
-* If "valid" is false then "value" is not valid and if possible is going to have the actual value returned
-  from the source. "value" is preserved as a string, to be able to represent other invalid values from the source.
-* If errors were found from any of the sites and sources, you will have them here as an array of strings
-  whenever possible.
+* "value" number with n decimals (specified on app properties) if "valid" is true.
+* If "valid" is false then "value" may have -1.0 and if possible the actual value returned
+  from the source is going to be mentioned on a warning or error in JSON response.
+* If errors found from any of the sites and sources, you will have them here as an array of strings.
+* If warnings found from any of the sites and sources, you will have them here as an array of strings.
+
+Every service call is exceuted in parallel using Kotlin Coroutines, so even if a service fails,
+all others should be present with its rate or an error message.

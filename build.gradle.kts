@@ -15,6 +15,10 @@ java.sourceCompatibility = JavaVersion.VERSION_13
 
 repositories {
 	mavenCentral()
+	maven {
+		url = uri("https://jcenter.bintray.com/")
+	//url = uri("https://repo.spring.io/libs-release")
+	}
 }
 
 dependencies {
@@ -25,6 +29,10 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("org.jsoup:jsoup:1.13.1")
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.1")
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
+
+	implementation("khttp:khttp:1.0.0")
+
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 

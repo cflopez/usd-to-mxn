@@ -1,4 +1,4 @@
-package com.credijusto.challenge.usdtomxn.vo
+package com.credijusto.challenge.usdtomxn.ratesources.banxico.vo
 
 import com.credijusto.challenge.usdtomxn.ratesources.banxico.BanxicoDomScraper
 import org.jsoup.select.Elements

@@ -11,7 +11,7 @@ data class ProviderValue(
         @SerialName("last_updated")
         @Serializable(with = InstantAsStringSerializer::class)
         val lastUpdated: Instant,
-        val value: String,
+        val value: Double = -1.0,
         val source: String,
-        val valid: Boolean
+        val valid: Boolean = false
     )

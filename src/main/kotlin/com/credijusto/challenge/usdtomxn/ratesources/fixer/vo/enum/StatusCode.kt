@@ -1,4 +1,4 @@
-package com.credijusto.challenge.usdtomxn.enum
+package com.credijusto.challenge.usdtomxn.ratesources.fixer.vo.enum
 
 /**
  * Enums with comments are custom accordingly to the ones that uses Fixer.io
@@ -75,5 +75,17 @@ enum class StatusCode(val code: Int) {
     NotExtended(510),
     NetworkAuthenticationRequired(511),
 
-    Unknown(0)
+    Unknown(0);
+
+    companion object {
+        fun getFromValue(code: Int): StatusCode {
+            for (statusCode in values()) {
+                if (code == statusCode.code) {
+                    return statusCode
+                }
+            }
+            return Unknown
+        }
+    }
 }
+
