@@ -5,9 +5,7 @@ import org.hibernate.validator.constraints.URL
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated
-import java.time.Duration
 import javax.validation.constraints.Min
-import javax.validation.constraints.NotBlank
 import javax.validation.constraints.Pattern
 
 
@@ -48,7 +46,7 @@ abstract class BaseProperties {
 
     @URL
     open lateinit var urlFixIo: String
-    @Pattern(regexp="^[0-9a-zA-Z]{20,40}$")
+    //@Pattern(regexp="^[0-9a-zA-Z]{20,40}$")
     open lateinit var accessKeyFixIo: String
     @Pattern(regexp="^(FREE|BASIC|PROFESSIONAL|PROFESSIONAL PLUS|ENTERPRISE){1}$")
     open lateinit var accessTypeFixIo: String
@@ -59,7 +57,7 @@ abstract class BaseProperties {
     open lateinit var urlSieApiPathVariable: String
     @Pattern(regexp="^([^,\\s]*,)*([^,\\s]*)$")
     open lateinit var seriesSieApi: String
-    @Pattern(regexp="^[0-9a-zA-Z]{40,80}$")
+    //@Pattern(regexp="^[0-9a-zA-Z]{40,80}$")
     open lateinit var tokenSieApi: String
     @Pattern(regexp="^([^,\\s]*,)*([^,\\s]*)$")
     open lateinit var variantsJsonSieApi: String

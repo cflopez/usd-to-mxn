@@ -5,7 +5,7 @@ import org.jsoup.select.Elements
 
 class BanxicoProcessValue (
     val elms: Elements,
-    val idxs: Map<BanxicoDomScraper.indexNames, Int>,
+    val idxs: Map<BanxicoDomScraper.Companion.indexNames, Int>,
     val stringDateValue: String,
     val keyVariants: Array<String>,
     val decimals: Int

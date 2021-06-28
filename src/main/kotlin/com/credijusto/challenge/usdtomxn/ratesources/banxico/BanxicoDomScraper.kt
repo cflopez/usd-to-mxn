@@ -25,8 +25,10 @@ class BanxicoDomScraper (val appProperties: AppProperties) {
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    enum class indexNames {
-        FECHA_NAME, FECHA_VALUE, FIX_NAME, FIX_VALUE, DOF_NAME, DOF_VALUE, PAGOS_NAME, PAGOS_VALUE
+    companion object {
+        enum class indexNames {
+            FECHA_NAME, FECHA_VALUE, FIX_NAME, FIX_VALUE, DOF_NAME, DOF_VALUE, PAGOS_NAME, PAGOS_VALUE
+        }
     }
 
 

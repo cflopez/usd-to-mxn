@@ -13,7 +13,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.util.*
-import java.util.concurrent.ThreadLocalRandom
 
 
 @ExtendWith(SpringExtension::class)
@@ -34,12 +33,18 @@ internal class BanxicoDomScraperTest {
      */
     private lateinit var columnNames: Array<String>
 
+    /**
+     * BanxicoDomScraper instance
+     */
+    private lateinit var banxico: BanxicoDomScraper
+
 
     @BeforeEach
     private fun `intialize table and columnNames if null`() {
         if (table == null) {
 
-            table = BanxicoDomScraper.tableSelect(appProperties)
+            banxico = BanxicoDomScraper(appProperties)
+            table = banxico.tableSelect()
 
             if (table != null && table!!.size > 0) {
                 columnNames = appProperties.columnNamesBanxico.split(",").toTypedArray()
@@ -74,7 +79,7 @@ internal class BanxicoDomScraperTest {
      */
     @Test
     internal fun `Indexes for column names should be found on map`() {
-        val map = BanxicoDomScraper.getIndexDefinitions(appProperties)
+        val map = banxico.getIndexDefinitions()
 
         var index = 0
         var count = 0
@@ -107,7 +112,7 @@ internal class BanxicoDomScraperTest {
         val now = Instant.now()
         val nowDateString = SimpleDateFormat(appProperties.dateFormatBanxico).format(Date.from( now ))
         assertTrue(
-            BanxicoDomScraper.validateHTMLFoundDate(nowDateString, now, appProperties.dateFormatBanxico)
+            banxico.validateHTMLFoundDate(nowDateString, now, appProperties.dateFormatBanxico)
         )
     }
 
