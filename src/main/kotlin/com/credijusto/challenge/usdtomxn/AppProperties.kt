@@ -8,6 +8,8 @@ import org.springframework.validation.annotation.Validated
 import javax.validation.constraints.Min
 import javax.validation.constraints.Pattern
 
+import io.github.cdimascio.dotenv.dotenv
+
 
 @Component
 @ConfigurationProperties("app")
@@ -16,6 +18,17 @@ class AppProperties : BaseProperties() {
 }
 
 abstract class BaseProperties {
+
+    /**
+     * For external env variables not in application.properties
+     */
+    val dotenv = dotenv()
+
+    @Pattern(regexp="^[0-9a-zA-Z]{20,40}$")
+    open var accessKeyFixIo: String = dotenv["APP_ACCESSKEYFIXIO"]
+    @Pattern(regexp="^[0-9a-zA-Z]{40,80}$")
+    open var tokenSieApi: String = dotenv["APP_TOKENSIEAPI"]
+
 
     @Min(1)
     open lateinit var roundDecimals: String
@@ -39,16 +52,15 @@ abstract class BaseProperties {
     open lateinit var nameIndexesBanxico: String
     @Pattern(regexp="^([0-9]+,){3}[0-9]+$")
     open lateinit var valueIndexesBanxico: String
-    @Pattern(regexp="^((yyyy)|(MM)|(dd))[\\/-]((MM)|(dd))[\\/-]((yyyy)|(dd))$")
+    @Pattern(regexp="^((yyyy)|(MM)|(dd))[/-]((MM)|(dd))[/-]((yyyy)|(dd))$")
     open lateinit var dateFormatBanxico: String
     @Pattern(regexp="^([^,\\s]*,){2}([^,\\s]*)$")
     open lateinit var variantsJsonBanxico: String
 
     @URL
     open lateinit var urlFixIo: String
-    //@Pattern(regexp="^[0-9a-zA-Z]{20,40}$")
-    open lateinit var accessKeyFixIo: String
-    @Pattern(regexp="^(FREE|BASIC|PROFESSIONAL|PROFESSIONAL PLUS|ENTERPRISE){1}$")
+
+    @Pattern(regexp="^(FREE|BASIC|PROFESSIONAL|PROFESSIONAL PLUS|ENTERPRISE)$")
     open lateinit var accessTypeFixIo: String
 
     @URL
@@ -57,8 +69,7 @@ abstract class BaseProperties {
     open lateinit var urlSieApiPathVariable: String
     @Pattern(regexp="^([^,\\s]*,)*([^,\\s]*)$")
     open lateinit var seriesSieApi: String
-    //@Pattern(regexp="^[0-9a-zA-Z]{40,80}$")
-    open lateinit var tokenSieApi: String
+
     @Pattern(regexp="^([^,\\s]*,)*([^,\\s]*)$")
     open lateinit var variantsJsonSieApi: String
 }

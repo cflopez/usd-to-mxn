@@ -32,13 +32,14 @@ dependencies {
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
 
 	implementation("khttp:khttp:1.0.0")
+	implementation("io.github.cdimascio:dotenv-kotlin:6.2.2")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
 tasks.withType<KotlinCompile> {
 	kotlinOptions {
-		freeCompilerArgs = listOf("-Xjsr305=strict")
+		freeCompilerArgs = listOf("-Xjsr305=strict","-Xopt-in=kotlin.RequiresOptIn")
 		jvmTarget = "13"
 	}
 }

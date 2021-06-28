@@ -1,1 +1,2 @@
-web: java -Dserver.port=$PORT -Dapp.accessKeyFixIo=${ACCESS_KEY_FIXIO} -Dapp.tokenSieApi=${TOKEN_SIE_API} -jar ${PATH_TO_JAR}
+web: java -Dserver.port=$PORT $JAVA_OPTS -jar build/libs/usdtomxn-0.0.1-SNAPSHOT.jar
+ÑÑ;qÑq;q:q:ÑqÑ:;Ñ

@@ -53,10 +53,10 @@ class Controller(val appProperties: AppProperties) {
 
         val helper = Helper(appProperties)
 
-        val getters = mapOf<String, (AppProperties) -> ResultValue>(
-            banxico.provider1 to { appProperties -> banxico.getRates() },
-            fixio.provider2 to { appProperties -> fixio.getRates() },
-            sieapi.provider3 to { appProperties -> sieapi.getRates() }
+        val getters = mapOf(
+            banxico.provider1 to { banxico.getRates() },
+            fixio.provider2 to { fixio.getRates() },
+            sieapi.provider3 to { sieapi.getRates() }
         )
 
         val result = getAllAsync(helper.providers, getters)
@@ -98,10 +98,10 @@ class Controller(val appProperties: AppProperties) {
      * @return The collection of results at the receive channel
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun CoroutineScope.getRateFunProducer(getters: Map<String, (AppProperties) -> ResultValue>)
+    private fun CoroutineScope.getRateFunProducer(getters: Map<String, () -> ResultValue>)
             : ReceiveChannel<ResultValue> = produce {
         for ((providerKey, getFun) in getters) {
-            send( getOne( providerKey ) { appProperties -> getFun(appProperties) } )
+            send( getOne( providerKey ) { getFun() } )
             sentToChannel.add(providerKey)
         }
     }
@@ -113,7 +113,7 @@ class Controller(val appProperties: AppProperties) {
     @OptIn(ExperimentalTime::class)
     private fun getAllAsync(
         providers: Array<String>,
-        getters: Map<String, (AppProperties) -> ResultValue>): ResultValue {
+        getters: Map<String, () -> ResultValue>): ResultValue {
         return runBlocking {
             val rates = mutableMapOf<String, ProviderValue>()
             val errors = mutableListOf<String>()
@@ -143,7 +143,7 @@ class Controller(val appProperties: AppProperties) {
                 }
             }
 
-            addTimeOutsToResult(appProperties, rates, errors, warnings)
+            addTimeOutsToResult(rates, errors)
             ResultValue(rates, errors, warnings)
         }
     }
@@ -153,10 +153,8 @@ class Controller(val appProperties: AppProperties) {
      * are the providerKeys that timed-out; that is, all the providerKeys
      * that are in sentToChannel but are not in receivedFromChannel
      */
-    private fun addTimeOutsToResult(appProperties: AppProperties,
-                                    rates: MutableMap<String, ProviderValue>,
-                                    errors: MutableList<String>,
-                                    warnings: MutableList<String>) {
+    private fun addTimeOutsToResult(rates: MutableMap<String, ProviderValue>,
+                                    errors: MutableList<String>) {
         sentToChannel.removeAll(receivedFromChannel)
         sentToChannel.forEach { timedOut ->
             rates.put(timedOut, ProviderValue())

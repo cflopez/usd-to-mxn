@@ -15,13 +15,13 @@ import org.slf4j.LoggerFactory
 import java.time.Instant
 
 
-class FixIoClient (val appProperties: AppProperties) {
+class FixIoClient (private val appProperties: AppProperties) {
     
     val provider2 = Helper(appProperties).providers[1]
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    enum class accessType (val value: String) {
+    enum class AccessType (val value: String) {
         FREE("FREE"),
         BASIC("BASIC"),
         PROFESSIONAL("PROFESSIONAL"),
@@ -36,10 +36,10 @@ class FixIoClient (val appProperties: AppProperties) {
      * is going to be from EUR to USD to MXN due the limitations of the plan.
      */
     fun getRates(): ResultValue {
-        if (appProperties.accessTypeFixIo.equals(accessType.FREE.value)) {
+        if (appProperties.accessTypeFixIo == AccessType.FREE.value) {
             val fixRes = getRateForFree()
             return if (fixRes.success) {
-                val value = fixRes.rates?.get("MXN")!!?.div(fixRes.rates["USD"]!!)
+                val value = fixRes.rates?.get("MXN")?.div(fixRes.rates["USD"]!!)
                 val decimals = Integer.parseInt(appProperties.roundDecimals)
                 val rates =  mapOf( provider2 to
                         getProviderValueValidated(Instant.now(), value, source, decimals)
@@ -88,7 +88,7 @@ class FixIoClient (val appProperties: AppProperties) {
      * TODO: Change the library or update khttp when new version available
      */
     private fun getRateForPayed(): FixResponseValue {
-        val response : Response = khttp.get(
+        val response : Response = get(
             url = appProperties.urlFixIo,
             params = mapOf("access_key" to appProperties.accessKeyFixIo, "base" to "USD", "symbols" to "MXN")
         )

@@ -38,3 +38,6 @@ out/
 
 ### Heroku ###
 Procfile
+
+#for local env variables
+.env
