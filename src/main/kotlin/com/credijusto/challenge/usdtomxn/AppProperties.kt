@@ -8,11 +8,11 @@ import org.springframework.validation.annotation.Validated
 import javax.validation.constraints.Min
 import javax.validation.constraints.Pattern
 
-import io.github.cdimascio.dotenv.dotenv
+//import io.github.cdimascio.dotenv.dotenv
 
 
 @Component
-@ConfigurationProperties("app")
+@ConfigurationProperties(prefix = "app")
 @Validated
 class AppProperties : BaseProperties() {
 }
@@ -22,12 +22,12 @@ abstract class BaseProperties {
     /**
      * For external env variables not in application.properties
      */
-    val dotenv = dotenv()
+    //val dotenv = dotenv()
 
-    @Pattern(regexp="^[0-9a-zA-Z]{20,40}$")
-    open var accessKeyFixIo: String = dotenv["APP_ACCESSKEYFIXIO"]
-    @Pattern(regexp="^[0-9a-zA-Z]{40,80}$")
-    open var tokenSieApi: String = dotenv["APP_TOKENSIEAPI"]
+    //@Pattern(regexp="^[0-9a-zA-Z]{20,40}$")
+    open lateinit var accessKeyFixIo: String // = dotenv["APP_ACCESSKEYFIXIO"]
+    //@Pattern(regexp="^[0-9a-zA-Z]{40,80}$")
+    open lateinit var tokenSieApi: String //= dotenv["APP_TOKENSIEAPI"]
 
 
     @Min(1)
