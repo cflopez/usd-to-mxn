@@ -58,3 +58,8 @@ tasks.withType<Javadoc>{
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
+
+// Heroku Deployment
+tasks.register("stage") {
+	dependsOn("build")
+}
