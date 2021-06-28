@@ -1,14 +1,14 @@
 package com.credijusto.challenge.usdtomxn
 
+
 import org.hibernate.validator.constraints.URL
 import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.format.annotation.DateTimeFormat
-import org.springframework.format.annotation.NumberFormat
 import org.springframework.stereotype.Component
 import org.springframework.validation.annotation.Validated
+import java.time.Duration
 import javax.validation.constraints.Min
+import javax.validation.constraints.NotBlank
 import javax.validation.constraints.Pattern
-import kotlin.properties.Delegates
 
 
 @Component
@@ -24,12 +24,11 @@ abstract class BaseProperties {
 
     open lateinit var unexpectedError: String
 
-    @Pattern(regexp="^([^,\\s]*){1}$")
-    open lateinit var provider1: String
-    @Pattern(regexp="^([^,\\s]*){1}$")
-    open lateinit var provider2: String
-    @Pattern(regexp="^([^,\\s]*){1}$")
-    open lateinit var provider3: String
+    @Pattern(regexp="[0-9]+")
+    open lateinit var timeoutForEachCall: String
+
+    @Pattern(regexp="^([^,\\s]*,){2}([^,\\s]*)$")
+    open lateinit var providers: String
 
 
     @URL
@@ -56,6 +55,8 @@ abstract class BaseProperties {
 
     @URL
     open lateinit var urlSieApi: String
+    @Pattern(regexp="^\\{([^{},\\s])*}$")
+    open lateinit var urlSieApiPathVariable: String
     @Pattern(regexp="^([^,\\s]*,)*([^,\\s]*)$")
     open lateinit var seriesSieApi: String
     @Pattern(regexp="^[0-9a-zA-Z]{40,80}$")

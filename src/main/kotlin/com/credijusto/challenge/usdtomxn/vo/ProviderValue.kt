@@ -10,8 +10,8 @@ import java.time.Instant
 data class ProviderValue(
         @SerialName("last_updated")
         @Serializable(with = InstantAsStringSerializer::class)
-        val lastUpdated: Instant,
-        val value: Double = -1.0,
-        val source: String,
+        val lastUpdated: Instant = Instant.now(),
+        val value: Double? = null,
+        val source: String? = null,
         val valid: Boolean = false
     )

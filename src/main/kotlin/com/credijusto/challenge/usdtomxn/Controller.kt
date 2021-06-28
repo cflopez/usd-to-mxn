@@ -2,6 +2,7 @@ package com.credijusto.challenge.usdtomxn
 
 import com.credijusto.challenge.usdtomxn.ratesources.banxico.BanxicoDomScraper
 import com.credijusto.challenge.usdtomxn.ratesources.fixer.FixIoClient
+import com.credijusto.challenge.usdtomxn.ratesources.sie.SieApiClient
 import com.credijusto.challenge.usdtomxn.vo.ProviderValue
 import com.credijusto.challenge.usdtomxn.vo.ResultValue
 import kotlinx.serialization.encodeToString
@@ -16,24 +17,49 @@ import java.time.Instant
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 
 @RestController
-class Controller(private val appProperties: AppProperties) {
+class Controller(val appProperties: AppProperties) {
+
+    /**
+     * As every requested service at the backend is executed asynchronously
+     * with Coroutines, in order to identify which service did, we register
+     * its providerKey. After all sent services were consumed,
+     * if there was one or more that didn't, this set will help identifying
+     * them and add in the final result those that timed-out.
+     */
+    var sentToChannel = mutableSetOf<String>()
+
+    /**
+     * Every providerKey that was successfully received will be added here.
+     * All providerKeys that are not here but are in the senToChannel set
+     * will be added to the final result as a time-out.
+     * Lets take in consideration that these keys would also have variant suffixes.
+     */
+    var receivedFromChannel = mutableSetOf<String>()
 
     @GetMapping("/priceRate_USD_to_MXN")
     fun getAll(): ResponseEntity<String> {
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_JSON
 
+        val banxico = BanxicoDomScraper(appProperties)
+        val fixio = FixIoClient(appProperties)
+        val sieapi = SieApiClient(appProperties)
+
+        val helper = Helper(appProperties)
+
         val getters = mapOf<String, (AppProperties) -> ResultValue>(
-            appProperties.provider1 to { appProperties -> BanxicoDomScraper.getRates(appProperties) },
-            appProperties.provider2 to { appProperties -> FixIoClient.getRates(appProperties) }
+            banxico.provider1 to { appProperties -> banxico.getRates() },
+            fixio.provider2 to { appProperties -> fixio.getRates() },
+            sieapi.provider3 to { appProperties -> sieapi.getRates() }
         )
 
-        val result = getAllAsync(getters)
+        val result = getAllAsync(helper.providers, getters)
 
         return ResponseEntity.ok().headers(headers).body( Json.encodeToString(result) )
     }
@@ -76,14 +102,18 @@ class Controller(private val appProperties: AppProperties) {
             : ReceiveChannel<ResultValue> = produce {
         for ((providerKey, getFun) in getters) {
             send( getOne( providerKey ) { appProperties -> getFun(appProperties) } )
+            sentToChannel.add(providerKey)
         }
     }
 
     /**
-     * Async execution of all getter functions produced by getRateFunProducer.
+     * Async execution of all getter functions produced by getRateFunProducer.zz
      * After ll results are defined and merged the final result is ready to be returned.
      */
-    private fun getAllAsync(getters: Map<String, (AppProperties) -> ResultValue>): ResultValue {
+    @OptIn(ExperimentalTime::class)
+    private fun getAllAsync(
+        providers: Array<String>,
+        getters: Map<String, (AppProperties) -> ResultValue>): ResultValue {
         return runBlocking {
             val rates = mutableMapOf<String, ProviderValue>()
             val errors = mutableListOf<String>()
@@ -91,13 +121,46 @@ class Controller(private val appProperties: AppProperties) {
 
             val results = getRateFunProducer(getters)
 
-            results.consumeEach {
-                rates.putAll(it.rates)
-                errors.addAll(it.errors)
-                warnings.addAll(it.warnings)
+            //Replaced consumeEach to gain more grained control
+            //and be able to consider a timeout. Let's keep
+            //in consideration that the exact number of jobs in
+            //the producer is known and every one should be handled.
+            repeat(getters.size) {
+                val res = withTimeoutOrNull(Duration.milliseconds(appProperties.timeoutForEachCall.toLong())) {
+                    //receive is cancellable, so it suites fine for withTimeout block
+                    results.receive()
+                }
+                if (res != null) {
+                    rates.putAll(res.rates)
+                    errors.addAll(res.errors)
+                    warnings.addAll(res.warnings)
+
+                    providers.forEach {
+                        if (res.rates.toList()[0].first.contains(it)) {
+                            receivedFromChannel.add(it)
+                        }
+                    }
+                }
             }
 
+            addTimeOutsToResult(appProperties, rates, errors, warnings)
             ResultValue(rates, errors, warnings)
+        }
+    }
+
+    /**
+     * The relative complement of receivedFromChannel in sentToChannel
+     * are the providerKeys that timed-out; that is, all the providerKeys
+     * that are in sentToChannel but are not in receivedFromChannel
+     */
+    private fun addTimeOutsToResult(appProperties: AppProperties,
+                                    rates: MutableMap<String, ProviderValue>,
+                                    errors: MutableList<String>,
+                                    warnings: MutableList<String>) {
+        sentToChannel.removeAll(receivedFromChannel)
+        sentToChannel.forEach { timedOut ->
+            rates.put(timedOut, ProviderValue())
+            errors.add(timedOut + ": " + "Time out for this request.")
         }
     }
 }

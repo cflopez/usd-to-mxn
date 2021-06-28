@@ -5,7 +5,10 @@ import java.time.Instant
 import kotlin.math.pow
 import kotlin.math.round
 
-class Helper {
+class Helper (val appProperties: AppProperties) {
+
+    val providers = appProperties.providers.split(",").toTypedArray()
+
     companion object{
         fun roundRateValue(value: Double?, decimals: Int): Double {
             if (value != null) {
@@ -24,5 +27,13 @@ class Helper {
             }
             return ProviderValue(instant, -1.0, source,false)
         }
+
+        /**
+         * To prefix every error we are going to show to the final user from this class
+         */
+        fun addError(errorPrefix:String, errors: MutableList<String>, msg: String) {
+            errors.add(errorPrefix + ": " + msg)
+        }
+
     }
 }
